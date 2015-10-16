@@ -12,7 +12,7 @@ import android.content.Intent;
 import android.util.Log;
 
 import com.baidu.android.pushservice.PushConstants;
-import com.baidu.frontia.api.FrontiaPushMessageReceiver;
+import com.baidu.android.pushservice.PushMessageReceiver;
 import __PACKAGE_NAME__;
 
 /**
@@ -21,7 +21,7 @@ import __PACKAGE_NAME__;
  * @author NCIT
  *
  */
-public class BaiduPushReceiver extends FrontiaPushMessageReceiver {
+public class BaiduPushReceiver extends PushMessageReceiver {
 
 	/** LOG TAG */
     private static final String LOG_TAG = BaiduPushReceiver.class.getSimpleName();
