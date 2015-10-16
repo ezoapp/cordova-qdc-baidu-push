@@ -9,7 +9,7 @@ var baidu_push = {
     exec(successCallback, baidu_push.failureFn, 'BaiduPush', 'stopWork', []);
   },
   resumeWork: function(successCallback) {
-    exec(successCallback, baidu_push.failureFn, 'BaiduPush', 'resumeWork');
+    exec(successCallback, baidu_push.failureFn, 'BaiduPush', 'resumeWork', []);
   },
   setTags: function(tags, successCallback) {
     exec(successCallback, baidu_push.failureFn, 'BaiduPush', 'setTags', tags);
@@ -20,6 +20,6 @@ var baidu_push = {
   failureFn: function() {
     console.log('fail to register push');
   }
-}
+};
 
 module.exports = baidu_push;
