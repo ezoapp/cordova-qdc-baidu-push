@@ -27,6 +27,7 @@ public class BaiduPush extends CordovaPlugin {
 
 	/** JS回调接口对象 */
     public static CallbackContext pushCallbackContext = null;
+    public static CallbackContext tagsCallbackContext = null;
   
     /**
      * 插件初始化
@@ -93,7 +94,7 @@ public class BaiduPush extends CordovaPlugin {
             });
             ret = true;
         } else if ("setTags".equalsIgnoreCase(action)) {
-            pushCallbackContext = callbackContext;
+            tagsCallbackContext = callbackContext;
 
             PluginResult pluginResult = new PluginResult(PluginResult.Status.NO_RESULT);
             pluginResult.setKeepCallback(true);
@@ -123,7 +124,7 @@ public class BaiduPush extends CordovaPlugin {
             });
             ret = true;
         } else if ("delTags".equalsIgnoreCase(action)) {
-        	pushCallbackContext = callbackContext;
+        	tagsCallbackContext = callbackContext;
 
             PluginResult pluginResult = new PluginResult(PluginResult.Status.NO_RESULT);
             pluginResult.setKeepCallback(true);

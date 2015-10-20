@@ -116,7 +116,7 @@ public class BaiduPushReceiver extends PushMessageReceiver {
             jsonObject.put("data", data);
             jsonObject.put("type", CB_TYPE.onsettags);
 
-            sendPushData(jsonObject);
+            sendTagsData(jsonObject);
         } catch (JSONException e) {
             Log.e(LOG_TAG, e.getMessage(), e);
         }
@@ -153,7 +153,7 @@ public class BaiduPushReceiver extends PushMessageReceiver {
             jsonObject.put("data", data);
             jsonObject.put("type", CB_TYPE.ondeltags);
 
-            sendPushData(jsonObject);
+            sendTagsData(jsonObject);
         } catch (JSONException e) {
             Log.e(LOG_TAG, e.getMessage(), e);
         }
@@ -184,7 +184,7 @@ public class BaiduPushReceiver extends PushMessageReceiver {
             jsonObject.put("data", data);
             jsonObject.put("type", CB_TYPE.onlisttags);
 
-            sendPushData(jsonObject);
+            sendTagsData(jsonObject);
         } catch (JSONException e) {
             Log.e(LOG_TAG, e.getMessage(), e);
         }
@@ -295,6 +295,21 @@ public class BaiduPushReceiver extends PushMessageReceiver {
             PluginResult result = new PluginResult(PluginResult.Status.OK, jsonObject);
             result.setKeepCallback(true);
             BaiduPush.pushCallbackContext.sendPluginResult(result);
+        }
+    }
+
+    /**
+    * 接收标签内容并返回给前端JS
+    *
+    * @param jsonObject JSON对象
+    */    
+    private void sendTagsData(JSONObject jsonObject) {
+        Log.d(LOG_TAG, "BaiduPushReceiver#sendTagsData: " + (jsonObject != null ? jsonObject.toString() : "null"));
+
+        if (BaiduPush.tagsCallbackContext != null) {
+            PluginResult result = new PluginResult(PluginResult.Status.OK, jsonObject);
+            result.setKeepCallback(true);
+            BaiduPush.tagsCallbackContext.sendPluginResult(result);
         }
     }
 
