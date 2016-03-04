@@ -1,17 +1,21 @@
-//
-//  BaiduPushPlugin.h
-//  HaobanPlugin
-//
-//  Created by 马杰磊 on 15/6/17.
-//  Copyright (c) 2015年 NTTData. All rights reserved.
-//
 
 #import <Cordova/CDV.h>
-#import <CoreLocation/CoreLocation.h>
+
+extern NSString* const CBType_onbind;
+extern NSString* const CBType_onunbind;
+extern NSString* const CBType_onmessage;
+extern NSString* const CBType_onnotificationclicked;
+extern NSString* const CBType_onnotificationarrived;
+extern NSString* const CBType_onsettags;
+extern NSString* const CBType_ondeltags;
+extern NSString* const CBType_onlisttags;
 
 @interface BaiduPushPlugin : CDVPlugin
-@property (nonatomic) CDVPluginResult *result;
 
+@property (nonatomic, copy) NSString *startWorkCallbackId;
+@property (nonatomic, strong) NSDictionary *notificationMessage;
+@property (nonatomic, strong) NSDictionary *handlerObj;
+ 
 /*!
  @method
  @abstract 绑定
@@ -41,5 +45,9 @@
  @abstract 删除Tag
  */
 - (void)delTags:(CDVInvokedUrlCommand*)command;
+
+- (void)listTags:(CDVInvokedUrlCommand*)command;
+
+- (void)receiveNotificationWithType:(NSString *)type;
 
 @end

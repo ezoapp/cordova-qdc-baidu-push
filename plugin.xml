@@ -99,24 +99,34 @@
 
     <!-- ios -->
     <platform name="ios">
+    
         <config-file target="config.xml" parent="/*">
             <feature name="BaiduPush">
                 <param name="ios-package" value="BaiduPushPlugin"/>
             </feature>
         </config-file>
+
+        <config-file target="*-Info.plist" parent="UIBackgroundModes">
+            <array>
+                <string>remote-notification</string>
+            </array>
+        </config-file>        
         
+		<header-file src="src/ios/AppDelegate+notification.h" />
+		<source-file src="src/ios/AppDelegate+notification.m" />        
+
         <header-file src="src/ios/BaiduPushPlugin.h" />
         <source-file src="src/ios/BaiduPushPlugin.m" />
 
-      <!-- Wechat Official -->
-      <header-file src="libs/ios/BPush.h" />
-      <source-file src="libs/ios/libBPush.a" framework="true" />
+        <!-- Wechat Official -->
+        <header-file src="libs/ios/BPush.h" />
+        <source-file src="libs/ios/libBPush.a" framework="true" />
 
-      <!-- Other required frameworks -->
-      <framework src="libz.dylib" />
-      <framework src="Foundation.framework" />
-      <framework src="CoreTelephony.framework" />
-      <framework src="SystemConfiguration.framework" />
+        <!-- Other required frameworks -->
+        <framework src="libz.dylib" />
+        <framework src="Foundation.framework" />
+        <framework src="CoreTelephony.framework" />
+        <framework src="SystemConfiguration.framework" />
 
     </platform>
 </plugin>
