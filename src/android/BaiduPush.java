@@ -26,8 +26,8 @@ public class BaiduPush extends CordovaPlugin {
     private static final String LOG_TAG = BaiduPush.class.getSimpleName();
 
 	/** JS回调接口对象 */
-    public static CallbackContext pushCallbackContext = null;
-    public static CallbackContext tagsCallbackContext = null;
+    public static CallbackContext onbindContext = null;
+    public static CallbackContext cachedContext = null;
   
     /**
      * 插件初始化
@@ -49,7 +49,7 @@ public class BaiduPush extends CordovaPlugin {
     	boolean ret = false;
     	
         if ("startWork".equalsIgnoreCase(action)) {
-            pushCallbackContext = callbackContext;
+            this.onbindContext = callbackContext;
 
             final String apiKey = args.getString(0);
 
@@ -66,7 +66,7 @@ public class BaiduPush extends CordovaPlugin {
             });
             ret =  true;
         } else if ("stopWork".equalsIgnoreCase(action)) {
-            pushCallbackContext = callbackContext;
+            this.cachedContext = callbackContext;
 
             PluginResult pluginResult = new PluginResult(PluginResult.Status.NO_RESULT);
             pluginResult.setKeepCallback(true);
@@ -80,7 +80,7 @@ public class BaiduPush extends CordovaPlugin {
             });
             ret =  true;
         } else if ("resumeWork".equalsIgnoreCase(action)) {
-            pushCallbackContext = callbackContext;
+            this.cachedContext = callbackContext;
 
             PluginResult pluginResult = new PluginResult(PluginResult.Status.NO_RESULT);
             pluginResult.setKeepCallback(true);
@@ -94,7 +94,7 @@ public class BaiduPush extends CordovaPlugin {
             });
             ret = true;
         } else if ("setTags".equalsIgnoreCase(action)) {
-            tagsCallbackContext = callbackContext;
+            this.cachedContext = callbackContext;
 
             PluginResult pluginResult = new PluginResult(PluginResult.Status.NO_RESULT);
             pluginResult.setKeepCallback(true);
@@ -124,7 +124,7 @@ public class BaiduPush extends CordovaPlugin {
             });
             ret = true;
         } else if ("delTags".equalsIgnoreCase(action)) {
-        	tagsCallbackContext = callbackContext;
+        	this.cachedContext = callbackContext;
 
             PluginResult pluginResult = new PluginResult(PluginResult.Status.NO_RESULT);
             pluginResult.setKeepCallback(true);
@@ -153,7 +153,21 @@ public class BaiduPush extends CordovaPlugin {
                 }
             });
             ret = true;
-        }
+        } else if ("listTags".equalsIgnoreCase(action)) {
+        	this.cachedContext = callbackContext;
+
+            PluginResult pluginResult = new PluginResult(PluginResult.Status.NO_RESULT);
+            pluginResult.setKeepCallback(true);
+            callbackContext.sendPluginResult(pluginResult);
+            
+            cordova.getThreadPool().execute(new Runnable() {
+                public void run() {
+                	LOG.d(LOG_TAG, "PushManager#listTags");
+                    PushManager.listTags(cordova.getActivity().getApplicationContext());
+                }
+            });                        
+            ret = true;
+        }    
 
         return ret;
     }

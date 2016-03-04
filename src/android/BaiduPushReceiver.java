@@ -27,7 +27,7 @@ public class BaiduPushReceiver extends PushMessageReceiver {
     private static final String LOG_TAG = BaiduPushReceiver.class.getSimpleName();
     
     /** 回调类型 */
-    private enum CB_TYPE {
+    private enum CBType {
     	onbind,
     	onunbind,
     	onsettags,
@@ -37,6 +37,18 @@ public class BaiduPushReceiver extends PushMessageReceiver {
     	onnotificationclicked,
     	onnotificationarrived
     };
+    
+    private enum ResultKey {
+        type,
+        appId,
+        userId,
+        channelId,
+        requestId,
+        successTags,
+        failTags,
+        tags,
+        payload        
+    };
 
     /**
      * 百度云推送绑定回调
@@ -45,21 +57,26 @@ public class BaiduPushReceiver extends PushMessageReceiver {
     public void onBind(Context context, int errorCode, String appId, String userId, String channelId, String requestId) {
         Log.d(LOG_TAG, "BaiduPushReceiver#onBind");
 
-        try {
-            JSONObject jsonObject = new JSONObject();
-
-            JSONObject data = new JSONObject();
-            setStringData(data, "appId", appId);
-            setStringData(data, "userId", userId);
-            setStringData(data, "channelId", channelId);
-
-            jsonObject.put("data", data);
-            jsonObject.put("type", CB_TYPE.onbind);
-
-            sendPushData(jsonObject);
-        } catch (JSONException e) {
-            Log.e(LOG_TAG, e.getMessage(), e);
-        }
+        if (BaiduPush.onbindContext != null) {
+            PluginResult result;
+            if (checkBaiduResult(errorCode)) {
+                JSONObject message = new JSONObject();
+                try {
+                    message.put(ResultKey.type + "", CBType.onbind);
+                    message.put(ResultKey.appId + "", appId);
+                    message.put(ResultKey.userId + "", userId);
+                    message.put(ResultKey.channelId + "", channelId);
+                    message.put(ResultKey.requestId + "", requestId);
+                } catch (JSONException e) {
+                    Log.e(LOG_TAG, e.getMessage(), e);
+                }                
+                result = new PluginResult(PluginResult.Status.OK, message);
+                result.setKeepCallback(true);
+            } else {
+                result = new PluginResult(PluginResult.Status.ERROR, PushConstants.getErrorMsg(errorCode));
+            }
+            BaiduPush.onbindContext.sendPluginResult(result);                
+        } 
     }
 
     /**
@@ -69,95 +86,79 @@ public class BaiduPushReceiver extends PushMessageReceiver {
     public void onUnbind(Context context, int errorCode, String requestId) {
     	Log.d(LOG_TAG, "BaiduPushReceiver#onUnbind");
 
-        try {
-            JSONObject jsonObject = new JSONObject();
-
-            JSONObject data = new JSONObject();
-            data.put("errorCode", errorCode);
-            setStringData(data, "requestId", requestId);
-
-            jsonObject.put("data", data);
-            jsonObject.put("type", CB_TYPE.onunbind);
-
-            sendPushData(jsonObject);
-        } catch (JSONException e) {
-            Log.e(LOG_TAG, e.getMessage(), e);
-        }
+        if (BaiduPush.cachedContext != null) {
+            PluginResult result;
+            if (checkBaiduResult(errorCode)) {
+                JSONObject message = new JSONObject();
+                try {
+                    message.put(ResultKey.type + "", CBType.onunbind);
+                    message.put(ResultKey.requestId + "", requestId);
+                } catch (JSONException e) {
+                    Log.e(LOG_TAG, e.getMessage(), e);
+                }                
+                result = new PluginResult(PluginResult.Status.OK, message);
+                result.setKeepCallback(true);
+            } else {
+                result = new PluginResult(PluginResult.Status.ERROR, PushConstants.getErrorMsg(errorCode));
+            }
+            BaiduPush.cachedContext.sendPluginResult(result);                
+        }        
     }
 
     /**
      * 百度云推送TAG绑定回调
      */
     @Override
-    public void onSetTags(Context context, int errorCode, List<String> sucessTags, List<String> failTags, String requestId) {
+    public void onSetTags(Context context, int errorCode, List<String> successTags, List<String> failTags, String requestId) {
     	Log.d(LOG_TAG, "BaiduPushReceiver#onSetTags");
 
-        try {
-            JSONObject jsonObject = new JSONObject();
-
-            JSONObject data = new JSONObject();
-            data.put("errorCode", errorCode);
-            setStringData(data, "requestId", requestId);
-            if (sucessTags != null && sucessTags.size() > 0) {
-            	JSONArray sucessTagArr = new JSONArray();
-	            for (String successTag : sucessTags) {
-	            	sucessTagArr.put(successTag);
-	            }
-	            data.put("sucessTags", sucessTagArr);
+        if (BaiduPush.cachedContext != null) {
+            PluginResult result;
+            if (checkBaiduResult(errorCode)) {
+                JSONObject message = new JSONObject();
+                try {
+                    message.put(ResultKey.type + "", CBType.onsettags);
+                    message.put(ResultKey.successTags + "", new JSONArray(successTags));
+                    message.put(ResultKey.failTags + "", new JSONArray(failTags));
+                    message.put(ResultKey.requestId + "", requestId);
+                } catch (JSONException e) {
+                    Log.e(LOG_TAG, e.getMessage(), e);
+                }                
+                result = new PluginResult(PluginResult.Status.OK, message);
+                result.setKeepCallback(true);
+            } else {
+                result = new PluginResult(PluginResult.Status.ERROR, PushConstants.getErrorMsg(errorCode));
             }
-            if (failTags != null && failTags.size() > 0) {
-            	JSONArray failTagArr = new JSONArray();
-	            for (String failTag : failTags) {
-	            	failTagArr.put(failTag);
-	            }
-	            data.put("failTags", failTagArr);
-            }
-
-            jsonObject.put("data", data);
-            jsonObject.put("type", CB_TYPE.onsettags);
-
-            sendTagsData(jsonObject);
-        } catch (JSONException e) {
-            Log.e(LOG_TAG, e.getMessage(), e);
-        }
+            BaiduPush.cachedContext.sendPluginResult(result);                
+        }        
     }
 
     /**
      * 百度云推送解除TAG绑定回调
      */
     @Override
-    public void onDelTags(Context context, int errorCode, List<String> sucessTags, List<String> failTags, String requestId) {
+    public void onDelTags(Context context, int errorCode, List<String> successTags, List<String> failTags, String requestId) {
     	Log.d(LOG_TAG, "BaiduPushReceiver#onDelTags");
 
-        try {
-            JSONObject jsonObject = new JSONObject();
-
-            JSONObject data = new JSONObject();
-            data.put("errorCode", errorCode);
-            setStringData(data, "requestId", requestId);
-            if (sucessTags != null && sucessTags.size() > 0) {
-            	JSONArray sucessTagArr = new JSONArray();
-	            for (String successTag : sucessTags) {
-	            	sucessTagArr.put(successTag);
-	            }
-	            data.put("sucessTags", sucessTagArr);
+        if (BaiduPush.cachedContext != null) {
+            PluginResult result;
+            if (checkBaiduResult(errorCode)) {
+                JSONObject message = new JSONObject();
+                try {
+                    message.put(ResultKey.type + "", CBType.ondeltags);
+                    message.put(ResultKey.successTags + "", new JSONArray(successTags));
+                    message.put(ResultKey.failTags + "", new JSONArray(failTags));
+                    message.put(ResultKey.requestId + "", requestId);
+                } catch (JSONException e) {
+                    Log.e(LOG_TAG, e.getMessage(), e);
+                }                
+                result = new PluginResult(PluginResult.Status.OK, message);
+                result.setKeepCallback(true);
+            } else {
+                result = new PluginResult(PluginResult.Status.ERROR, PushConstants.getErrorMsg(errorCode));
             }
-            if (failTags != null && failTags.size() > 0) {
-            	JSONArray failTagArr = new JSONArray();
-	            for (String failTag : failTags) {
-	            	failTagArr.put(failTag);
-	            }
-	            data.put("failTags", failTagArr);
-            }
-
-            jsonObject.put("data", data);
-            jsonObject.put("type", CB_TYPE.ondeltags);
-
-            sendTagsData(jsonObject);
-        } catch (JSONException e) {
-            Log.e(LOG_TAG, e.getMessage(), e);
-        }
-
+            BaiduPush.cachedContext.sendPluginResult(result);                
+        }  
     }
 
     /**
@@ -167,56 +168,49 @@ public class BaiduPushReceiver extends PushMessageReceiver {
     public void onListTags(Context context, int errorCode, List<String> tags, String requestId) {
     	Log.d(LOG_TAG, "BaiduPushReceiver#onListTags");
 
-        try {
-            JSONObject jsonObject = new JSONObject();
-
-            JSONObject data = new JSONObject();
-            data.put("errorCode", errorCode);
-            setStringData(data, "requestId", requestId);
-            if (tags != null && tags.size() > 0) {
-            	JSONArray tagArr = new JSONArray();
-	            for (String tag : tags) {
-	            	tagArr.put(tag);
-	            }
-	            data.put("tags", tagArr);
+        if (BaiduPush.cachedContext != null) {
+            PluginResult result;
+            if (checkBaiduResult(errorCode)) {
+                JSONObject message = new JSONObject();
+                try {
+                    message.put(ResultKey.type + "", CBType.onlisttags);
+                    message.put(ResultKey.tags + "", new JSONArray(tags));
+                    message.put(ResultKey.requestId + "", requestId);
+                } catch (JSONException e) {
+                    Log.e(LOG_TAG, e.getMessage(), e);
+                }                
+                result = new PluginResult(PluginResult.Status.OK, message);
+                result.setKeepCallback(true);
+            } else {
+                result = new PluginResult(PluginResult.Status.ERROR, PushConstants.getErrorMsg(errorCode));
             }
-
-            jsonObject.put("data", data);
-            jsonObject.put("type", CB_TYPE.onlisttags);
-
-            sendTagsData(jsonObject);
-        } catch (JSONException e) {
-            Log.e(LOG_TAG, e.getMessage(), e);
-        }
-
+            BaiduPush.cachedContext.sendPluginResult(result);                
+        }  
     }
 
     /**
      * 百度云推送透传消息回调
      */
     @Override
-    public void onMessage(Context context, String message, String customContentString) {
+    public void onMessage(Context context, String messageString, String customContentString) {
         Log.d(LOG_TAG, "BaiduPushReceiver#onMessage");
 
-        try {
-            JSONObject jsonObject = new JSONObject();
-
-            JSONObject data = null;
-            if (customContentString != null && !"".equals(customContentString)) {
-                data = new JSONObject(customContentString);
-            } else {
-            	data = new JSONObject();
-            }
-            setStringData(data, "message", message);
-
-            jsonObject.put("data", data);
-            jsonObject.put("type", CB_TYPE.onmessage);
-
-            sendPushData(jsonObject);
-        } catch (JSONException e) {
-            Log.e(LOG_TAG, e.getMessage(), e);
-        }
-        
+        if (BaiduPush.onbindContext != null) {
+            JSONObject message = new JSONObject();
+            try {
+                JSONObject payload = (customContentString != null && !"".equals(customContentString)) 
+                    ? new JSONObject(customContentString): new JSONObject();
+                payload.put("message", messageString);
+                
+                message.put(ResultKey.type + "", CBType.onmessage);
+                message.put(ResultKey.payload + "", payload);
+            } catch (JSONException e) {
+                Log.e(LOG_TAG, e.getMessage(), e);
+            }                
+            PluginResult result = new PluginResult(PluginResult.Status.OK, message);
+            result.setKeepCallback(true);
+            BaiduPush.onbindContext.sendPluginResult(result);                
+        }        
     }
 
     /**
@@ -226,25 +220,23 @@ public class BaiduPushReceiver extends PushMessageReceiver {
     public void onNotificationClicked(Context context, String title, String description, String customContentString) {
         Log.d(LOG_TAG, "BaiduPushReceiver#onNotificationClicked");
 
-        try {
-            JSONObject jsonObject = new JSONObject();
-
-            JSONObject data = null;
-            if (customContentString != null && !"".equals(customContentString)) {
-                data = new JSONObject(customContentString);
-            } else {
-            	data = new JSONObject();
-            }
-            setStringData(data, "title", title);
-            setStringData(data, "description", description);
-
-            jsonObject.put("data", data);
-            jsonObject.put("type", CB_TYPE.onnotificationclicked);
-
-            sendPushData(jsonObject);
-        } catch (JSONException e) {
-            Log.e(LOG_TAG, e.getMessage(), e);
-        }
+        if (BaiduPush.onbindContext != null) {
+            JSONObject message = new JSONObject();
+            try {
+                JSONObject payload = (customContentString != null && !"".equals(customContentString)) 
+                    ? new JSONObject(customContentString): new JSONObject();
+                payload.put("title", title);
+                payload.put("description", description);
+                
+                message.put(ResultKey.type + "", CBType.onnotificationclicked);
+                message.put(ResultKey.payload + "", payload);
+            } catch (JSONException e) {
+                Log.e(LOG_TAG, e.getMessage(), e);
+            }                
+            PluginResult result = new PluginResult(PluginResult.Status.OK, message);
+            result.setKeepCallback(true);
+            BaiduPush.onbindContext.sendPluginResult(result);                
+        }        
 
         Intent intent = new Intent();
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -262,68 +254,30 @@ public class BaiduPushReceiver extends PushMessageReceiver {
     public void onNotificationArrived(Context context, String title, String description, String customContentString) {
         Log.d(LOG_TAG, "BaiduPushReceiver#onNotificationArrived");
 
-        try {
-            JSONObject jsonObject = new JSONObject();
-
-            JSONObject data = null;
-            if (customContentString != null && !"".equals(customContentString)) {
-                data = new JSONObject(customContentString);
-            } else {
-            	data = new JSONObject();
-            }
-            setStringData(data, "title", title);
-            setStringData(data, "description", description);
-
-            jsonObject.put("data", data);
-            jsonObject.put("type", CB_TYPE.onnotificationarrived);
-
-            sendPushData(jsonObject);
-        } catch (JSONException e) {
-            Log.e(LOG_TAG, e.getMessage(), e);
-        }
-    }
-
-    /**
-     * 接收推送内容并返回给前端JS
-     * 
-     * @param jsonObject JSON对象
-     */
-    private void sendPushData(JSONObject jsonObject) {
-        Log.d(LOG_TAG, "BaiduPushReceiver#sendPushData: " + (jsonObject != null ? jsonObject.toString() : "null"));
-
-        if (BaiduPush.pushCallbackContext != null) {
-            PluginResult result = new PluginResult(PluginResult.Status.OK, jsonObject);
+        if (BaiduPush.onbindContext != null) {
+            JSONObject message = new JSONObject();
+            try {
+                JSONObject payload = (customContentString != null && !"".equals(customContentString)) 
+                    ? new JSONObject(customContentString): new JSONObject();
+                payload.put("title", title);
+                payload.put("description", description);
+                
+                message.put(ResultKey.type + "", CBType.onnotificationarrived);
+                message.put(ResultKey.payload + "", payload);
+            } catch (JSONException e) {
+                Log.e(LOG_TAG, e.getMessage(), e);
+            }                
+            PluginResult result = new PluginResult(PluginResult.Status.OK, message);
             result.setKeepCallback(true);
-            BaiduPush.pushCallbackContext.sendPluginResult(result);
+            BaiduPush.onbindContext.sendPluginResult(result);                
+        }        
+    }
+    
+    private boolean checkBaiduResult(int errorCode) {
+        if (errorCode == 0) {
+            return true;
         }
+        return false;
     }
-
-    /**
-    * 接收标签内容并返回给前端JS
-    *
-    * @param jsonObject JSON对象
-    */    
-    private void sendTagsData(JSONObject jsonObject) {
-        Log.d(LOG_TAG, "BaiduPushReceiver#sendTagsData: " + (jsonObject != null ? jsonObject.toString() : "null"));
-
-        if (BaiduPush.tagsCallbackContext != null) {
-            PluginResult result = new PluginResult(PluginResult.Status.OK, jsonObject);
-            result.setKeepCallback(true);
-            BaiduPush.tagsCallbackContext.sendPluginResult(result);
-        }
-    }
-
-    /**
-     * 设定字符串类型JSON对象，如值为空时不设定
-     * 
-     * @param jsonObject JSON对象
-     * @param name 关键字
-     * @param value 值
-     * @throws JSONException JSON异常
-     */
-    private void setStringData(JSONObject jsonObject, String name, String value) throws JSONException {
-    	if (value != null && !"".equals(value)) {
-    		jsonObject.put(name, value);
-    	}
-    }
+    
 }
