@@ -73,7 +73,7 @@ public class BaiduPushReceiver extends PushMessageReceiver {
                 result = new PluginResult(PluginResult.Status.OK, message);
                 result.setKeepCallback(true);
             } else {
-                result = new PluginResult(PluginResult.Status.ERROR, PushConstants.getErrorMsg(errorCode));
+                result = new PluginResult(PluginResult.Status.ERROR, PushConstants.a(errorCode));
             }
             BaiduPush.onbindContext.sendPluginResult(result);                
         } 
@@ -99,7 +99,7 @@ public class BaiduPushReceiver extends PushMessageReceiver {
                 result = new PluginResult(PluginResult.Status.OK, message);
                 result.setKeepCallback(true);
             } else {
-                result = new PluginResult(PluginResult.Status.ERROR, PushConstants.getErrorMsg(errorCode));
+                result = new PluginResult(PluginResult.Status.ERROR, PushConstants.a(errorCode));
             }
             BaiduPush.cachedContext.sendPluginResult(result);                
         }        
@@ -127,7 +127,7 @@ public class BaiduPushReceiver extends PushMessageReceiver {
                 result = new PluginResult(PluginResult.Status.OK, message);
                 result.setKeepCallback(true);
             } else {
-                result = new PluginResult(PluginResult.Status.ERROR, PushConstants.getErrorMsg(errorCode));
+                result = new PluginResult(PluginResult.Status.ERROR, PushConstants.a(errorCode));
             }
             BaiduPush.cachedContext.sendPluginResult(result);                
         }        
@@ -155,7 +155,7 @@ public class BaiduPushReceiver extends PushMessageReceiver {
                 result = new PluginResult(PluginResult.Status.OK, message);
                 result.setKeepCallback(true);
             } else {
-                result = new PluginResult(PluginResult.Status.ERROR, PushConstants.getErrorMsg(errorCode));
+                result = new PluginResult(PluginResult.Status.ERROR, PushConstants.a(errorCode));
             }
             BaiduPush.cachedContext.sendPluginResult(result);                
         }  
@@ -182,7 +182,7 @@ public class BaiduPushReceiver extends PushMessageReceiver {
                 result = new PluginResult(PluginResult.Status.OK, message);
                 result.setKeepCallback(true);
             } else {
-                result = new PluginResult(PluginResult.Status.ERROR, PushConstants.getErrorMsg(errorCode));
+                result = new PluginResult(PluginResult.Status.ERROR, PushConstants.a(errorCode));
             }
             BaiduPush.cachedContext.sendPluginResult(result);                
         }  
@@ -242,8 +242,8 @@ public class BaiduPushReceiver extends PushMessageReceiver {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         intent.setClass(context, MainActivity.class);
-        intent.putExtra(PushConstants.EXTRA_NOTIFICATION_TITLE, title);
-        intent.putExtra(PushConstants.EXTRA_NOTIFICATION_CONTENT, customContentString);
+        // intent.putExtra(PushConstants.EXTRA_NOTIFICATION_TITLE, title);
+        // intent.putExtra(PushConstants.EXTRA_NOTIFICATION_CONTENT, customContentString);
         context.startActivity(intent);
     }
 

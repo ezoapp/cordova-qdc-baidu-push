@@ -42,7 +42,7 @@
 
     <config-file target="AndroidManifest.xml" parent="/manifest/application">
 
-      <!-- push service start -->
+      <!-- 4.3.0 版本的 AndroidManifest.xml 中 PushServiceReceiver 中增加四个可选 Action -->
       <!-- 用于接收系统消息以保证PushService正常运行 -->
       <receiver android:name="com.baidu.android.pushservice.PushServiceReceiver" android:process=":bdservice_v1">
         <intent-filter>
@@ -57,6 +57,7 @@
           <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED" />
         </intent-filter>
       </receiver>
+      
       <!-- Push服务接收客户端发送的各种请求-->
       <receiver android:name="com.baidu.android.pushservice.RegistrationReceiver" android:process=":bdservice_v1">
         <intent-filter>
@@ -68,14 +69,17 @@
           <data android:scheme="package" />
         </intent-filter>
       </receiver>
+      
+      <!-- 4.0.0 版本的 AndroidManifest.xml 中 PushService 声明新增一个 intent-filter -->
       <service android:name="com.baidu.android.pushservice.PushService" android:exported="true" android:process=":bdservice_v1">
         <intent-filter>
             <action android:name="com.baidu.android.pushservice.action.PUSH_SERVICE" />
         </intent-filter>
       </service>
+      
       <!-- 4.4版本新增的CommandService声明，提升小米和魅族手机上的实际推送到达率 -->
       <service android:name="com.baidu.android.pushservice.CommandService" android:exported="true" />
-      <!-- push结束 -->
+      
       <!-- 此处Receiver名字修改为当前包名路径 -->
       <receiver android:name="com.qdc.plugins.baidu.BaiduPushReceiver">
         <intent-filter>
@@ -87,14 +91,22 @@
           <action android:name="com.baidu.android.pushservice.action.notification.CLICK" />
         </intent-filter>
       </receiver>
+      
+      <!-- 4.6.0 版本的 AndroidManifest.xml 中增加一个可选的 Activity 声明 -->
+      <activity android:name="com.baidu.android.pushservice.PushKeepAlive" android:theme="@android:style/Theme.Translucent.NoTitleBar"/>
+      
     </config-file>
 
     <source-file src="src/android/BaiduPush.java" target-dir="src/com/qdc/plugins/baidu" />
     <source-file src="src/android/BaiduPushReceiver.java" target-dir="src/com/qdc/plugins/baidu" />
-    <source-file src="libs/android/armeabi/libbdpush_V2_3.so" target-dir="libs/armeabi" />
-    <source-file src="libs/android/armeabi/libbdpush_V2_3.so" target-dir="libs/armeabi-v7a" />
-    <source-file src="libs/android/mips/libbdpush_V2_3.so" target-dir="libs/mips" />
-    <source-file src="libs/android/pushservice-4.5.3.48.jar" target-dir="libs" />
+    <source-file src="libs/android/arm64-v8a/libbdpush_V2_5.so" target-dir="libs/arm64-v8a" />
+    <source-file src="libs/android/armeabi/libbdpush_V2_5.so" target-dir="libs/armeabi" />
+    <source-file src="libs/android/armeabi-v7a/libbdpush_V2_5.so" target-dir="libs/armeabi-v7a" />
+    <source-file src="libs/android/mips/libbdpush_V2_5.so" target-dir="libs/mips" />
+    <source-file src="libs/android/mips64/libbdpush_V2_5.so" target-dir="libs/mips64" />
+    <source-file src="libs/android/x86/libbdpush_V2_5.so" target-dir="libs/x86" />
+    <source-file src="libs/android/x86_64/libbdpush_V2_5.so" target-dir="libs/x86_64" />
+    <source-file src="libs/android/pushservice-4.6.2.38.jar" target-dir="libs" />
   </platform>
 
     <!-- ios -->
