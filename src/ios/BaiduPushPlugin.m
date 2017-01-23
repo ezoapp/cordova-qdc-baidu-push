@@ -33,7 +33,7 @@ NSString* const ResultKey_payload = @"payload";
     NSString *apiKey = command.arguments[0];
     NSString *mode = command.arguments[1];
     BPushMode pushMode = (mode != (id)[NSNull null] && [mode caseInsensitiveCompare:@"production"] == NSOrderedSame) ? BPushModeProduction : BPushModeDevelopment; 
-    [BPush registerChannel:nil apiKey: apiKey pushMode:pushMode withFirstAction:nil withSecondAction:nil withCategory:nil isDebug:YES];
+    [BPush registerChannel:nil apiKey: apiKey pushMode:pushMode withFirstAction:nil withSecondAction:nil withCategory:nil useBehaviorTextInput:NO isDebug:YES];
 
     if (_onbindObserver != nil) {
         [[NSNotificationCenter defaultCenter] removeObserver:_onbindObserver];

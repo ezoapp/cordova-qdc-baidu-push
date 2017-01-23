@@ -126,14 +126,18 @@
             </feature>
         </config-file>
 
+        <config-file target="*-Info.plist" parent="NSLocationAlwaysUsageDescription">
+            <string>后台使用位置信息</string>
+        </config-file>  
+
         <config-file target="*-Info.plist" parent="UIBackgroundModes">
             <array>
                 <string>remote-notification</string>
             </array>
         </config-file>        
         
-		<header-file src="src/ios/AppDelegate+notification.h" />
-		<source-file src="src/ios/AppDelegate+notification.m" />        
+		    <header-file src="src/ios/AppDelegate+notification.h" />
+		    <source-file src="src/ios/AppDelegate+notification.m" />        
 
         <header-file src="src/ios/BaiduPushPlugin.h" />
         <source-file src="src/ios/BaiduPushPlugin.m" />
@@ -147,6 +151,7 @@
         <framework src="Foundation.framework" />
         <framework src="CoreTelephony.framework" />
         <framework src="SystemConfiguration.framework" />
+        <framework src="CoreLocation.framework" />
 
     </platform>
 </plugin>

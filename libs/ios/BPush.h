@@ -1,6 +1,6 @@
 //
 //  BPush.h
-//  Version: 1.4.3
+//  Version: 1.4.8
 //  百度云推送iOS版本头文件 //
 //
 
@@ -46,12 +46,15 @@ typedef void (^BPushCallBack)(id result, NSError *error);
  * @brief 注册百度云推送 SDK
  * @param
  *     launchOptions - App 启动时系统提供的参数，表明了 App 是通过什么方式启动的 apiKey - 通过apikey注册百度推送, mode - 当前推送的环境, isdebug - 是否是debug模式。
- * IOS8新参数
+ * iOS 8 新参数
  * @param rightAction - 快捷回复通知的第一个按钮名字默认为打开应用
- * @param leftAction - 第二个按钮名字默认会关闭应用
- * @param category 自定义参数 一组动作的唯一标示 需要与服务端aps的category字段匹配才能展现通知样式
+ * @param leftAction - 第二个按钮名字默认会关闭应用 iOS 9 快捷回复需要先设置此参数
+ * @param category 自定义参数 一组动作的唯一标识 需要与服务端aps的category字段匹配才能展现通知样式 iOS 9 快捷回复需要先设置此参数
+ * IOS 9 新参数
+ * @param behaviorTextInput 是否启用 iOS 9 快捷回复
+ 
  */
-+ (void)registerChannel:(NSDictionary *)launchOptions apiKey:(NSString *)apikey pushMode:(BPushMode)mode withFirstAction:(NSString *)leftAction withSecondAction:(NSString *)rightAction withCategory:(NSString *)category isDebug:(BOOL)isdebug;
++ (void)registerChannel:(NSDictionary *)launchOptions apiKey:(NSString *)apikey pushMode:(BPushMode)mode withFirstAction:(NSString *)rightAction withSecondAction:(NSString *)leftAction withCategory:(NSString *)category useBehaviorTextInput:(BOOL)behaviorTextInput isDebug:(BOOL)isdebug;
 
 /**
  * @brief 向云推送注册 device token，只有在注册deviceToken后才可以绑定
@@ -79,6 +82,25 @@ typedef void (^BPushCallBack)(id result, NSError *error);
  *     none
  */
 + (void)setBduss:(NSString *)bduss forApp:(NSString *)appid;
+
+/**
+ * 关闭 lbs
+ * @param
+ *      - 关闭lbs推送模式，默认是开启的，用户可以选择关闭
+ * @return
+ *     none
+ */
++ (void)disableLbs;
+
+/**
+ * 开启BPush 崩溃日志收集
+ * @param
+ *      - 开启BPush 崩溃日志收集 没有使用其他第三方崩溃收集工具的，建议调用此接口，BPush 会收集由于BPush SDK 本身引起的崩溃 便于SDK搜集已知问题，更快的修复问题。
+ * @return
+ *     none
+ */
++ (void)uploadBPushCrashLog;
+
 
 /**
  * @brief 绑定channel.将会在回调中看获得channnelid appid userid 等。
@@ -175,13 +197,19 @@ typedef void (^BPushCallBack)(id result, NSError *error);
  * @param soundName 自定义通知声音，设置为nil为默认声音
  
  * IOS8新参数
+ * @param rightAction - 快捷回复通知的第一个按钮名字默认为打开应用
+ * @param leftAction - 第二个按钮名字默认会关闭应用 iOS 9 快捷回复需要先设置此参数
  * @param region 自定义参数
  * @param regionTriggersOnce 自定义参数 到达某一区域时，是否触发本地通知
- * @param category 自定义参数 一组动作的唯一标示 默认为nil
+ * @param category 自定义参数 一组动作的唯一标示 默认为nil iOS 9 快捷回复需要先设置此参数
+ * IOS 9 新参数
+ * @param behaviorTextInput 是否启用 iOS 9 快捷回复
+
+ 
  */
 
 
-+ (void)localNotification:(NSDate *)date alertBody:(NSString *)body badge:(int)bage  withFirstAction:(NSString *)leftAction withSecondAction:(NSString *)rightAction userInfo:(NSDictionary *)userInfo soundName:(NSString *)soundName region:(CLRegion *)region regionTriggersOnce:(BOOL)regionTriggersOnce category:(NSString *)category;
++ (void)localNotification:(NSDate *)date alertBody:(NSString *)body badge:(int)bage  withFirstAction:(NSString *)rightAction withSecondAction:(NSString *)leftAction userInfo:(NSDictionary *)userInfo soundName:(NSString *)soundName region:(CLRegion *)region regionTriggersOnce:(BOOL)regionTriggersOnce category:(NSString *)category useBehaviorTextInput:(BOOL)behaviorTextInput;
 
 /**
  * 本地推送在前台推送。默认App在前台运行时不会进行弹窗，在程序接收通知调用此接口可实现指定的推送弹窗。
