@@ -125,16 +125,22 @@
                 <param name="ios-package" value="BaiduPushPlugin"/>
             </feature>
         </config-file>
-
         <config-file target="*-Info.plist" parent="NSLocationAlwaysUsageDescription">
-            <string>后台使用位置信息</string>
-        </config-file>  
-
+            <string>Allow Baidu-Push platform to send notification by your location.</string>
+        </config-file>
         <config-file target="*-Info.plist" parent="UIBackgroundModes">
             <array>
+		            <string>fetch</string>
+		            <string>newsstand-content</string>            
                 <string>remote-notification</string>
             </array>
         </config-file>        
+        <config-file target="*-Debug.plist" parent="aps-environment">
+          <string>development</string>
+        </config-file>
+        <config-file target="*-Release.plist" parent="aps-environment">
+          <string>production</string>
+        </config-file>       
         
 		    <header-file src="src/ios/AppDelegate+notification.h" />
 		    <source-file src="src/ios/AppDelegate+notification.m" />        
@@ -145,6 +151,7 @@
         <!-- Wechat Official -->
         <header-file src="libs/ios/BPush.h" />
         <source-file src="libs/ios/libBPush.a" framework="true" />
+        <resource-file src="libs/ios/BPushCerResource.bundle" />
 
         <!-- Other required frameworks -->
         <framework src="libz.dylib" />
@@ -152,6 +159,9 @@
         <framework src="CoreTelephony.framework" />
         <framework src="SystemConfiguration.framework" />
         <framework src="CoreLocation.framework" />
+        <framework src="AddressBook.framework"/>
+        <framework src="libsqlite3.tbd"/>
+        <framework src="libz.tbd"/>
 
     </platform>
 </plugin>

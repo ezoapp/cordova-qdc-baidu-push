@@ -1,5 +1,7 @@
 
+#import <Foundation/Foundation.h>
 #import <Cordova/CDV.h>
+#import <Cordova/CDVPlugin.h>
 
 extern NSString* const CBType_onbind;
 extern NSString* const CBType_onunbind;
@@ -14,7 +16,7 @@ extern NSString* const CBType_onlisttags;
 
 @property (nonatomic, copy) NSString *startWorkCallbackId;
 @property (nonatomic, strong) NSDictionary *notificationMessage;
-@property (nonatomic, strong) NSDictionary *handlerObj;
+@property (nonatomic, strong) NSMutableDictionary *handlerObj;
  
 /*!
  @method
@@ -49,5 +51,7 @@ extern NSString* const CBType_onlisttags;
 - (void)listTags:(CDVInvokedUrlCommand*)command;
 
 - (void)receiveNotificationWithType:(NSString *)type;
+
+- (void)disableLbs;
 
 @end

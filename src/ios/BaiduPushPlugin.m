@@ -1,6 +1,9 @@
 
 #import "BaiduPushPlugin.h"
 #import "BPush.h"
+#ifdef NSFoundationVersionNumber_iOS_9_x_Max
+#import <UserNotifications/UserNotifications.h>
+#endif
 
 NSString* const CBType_onbind = @"onbind";
 NSString* const CBType_onunbind = @"onunbind";
@@ -25,73 +28,91 @@ NSString* const ResultKey_payload = @"payload";
     NSNotificationCenter *_onbindObserver;    
 }
 
-- (void)startWork:(CDVInvokedUrlCommand*)command{
-    NSLog(@"startWork...");
+- (void)startWork:(CDVInvokedUrlCommand*)command
+{
+    [self.commandDelegate runInBackground:^ {
+        NSLog(@"startWork...");
     
-    self.startWorkCallbackId = command.callbackId;
-    
-    NSString *apiKey = command.arguments[0];
-    NSString *mode = command.arguments[1];
-    BPushMode pushMode = (mode != (id)[NSNull null] && [mode caseInsensitiveCompare:@"production"] == NSOrderedSame) ? BPushModeProduction : BPushModeDevelopment; 
-    [BPush registerChannel:nil apiKey: apiKey pushMode:pushMode withFirstAction:nil withSecondAction:nil withCategory:nil useBehaviorTextInput:NO isDebug:YES];
+        self.startWorkCallbackId = command.callbackId;
+        
+        NSString *apiKey = command.arguments[0];
+        NSString *mode = command.arguments[1];
+        BPushMode pushMode = (mode != (id)[NSNull null] && [mode caseInsensitiveCompare:@"production"] == NSOrderedSame) ? BPushModeProduction : BPushModeDevelopment; 
+        [BPush registerChannel:nil apiKey: apiKey pushMode:pushMode withFirstAction:nil withSecondAction:nil withCategory:nil useBehaviorTextInput:NO isDebug:YES];
 
-    if (_onbindObserver != nil) {
-        [[NSNotificationCenter defaultCenter] removeObserver:_onbindObserver];
-    }
+        if (_onbindObserver != nil) {
+            [[NSNotificationCenter defaultCenter] removeObserver:_onbindObserver];
+        }
 
-    _onbindObserver = [[NSNotificationCenter defaultCenter] addObserverForName:CBType_onbind
-                object:nil
-                queue:[NSOperationQueue mainQueue]
-                usingBlock:^(NSNotification *note) {
-                    NSLog(@"onbind callback...");
-                    id obj = [note object];
-                    
-                    if ([obj isKindOfClass:[NSError class]]) {
-                        NSError *error = (NSError *) obj;
-                        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:[error localizedDescription]];
-                        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-                        return;
-                    }
-                    
-                    NSData *deviceToken = (NSData *) obj;
-                    [BPush registerDeviceToken:deviceToken];
-                    [BPush bindChannelWithCompleteHandler:^(id result, NSError *error) {
-                        CDVPluginResult* pluginResult;
-                        if ([self checkBaiduResult:result]) {
-                            NSMutableDictionary* message = [NSMutableDictionary dictionaryWithCapacity:6];
-                            [message setObject:CBType_onbind forKey:ResultKey_type];
-                            [message setObject:[BPush getAppId] forKey:ResultKey_appId];
-                            [message setObject:[BPush getUserId] forKey:ResultKey_userId];
-                            [message setObject:[BPush getChannelId] forKey:ResultKey_channelId];
-                            [message setObject:result[BPushRequestRequestIdKey] forKey:ResultKey_requestId];
-                        
-                            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:message];
-                            [pluginResult setKeepCallbackAsBool:YES];
-                        } else {
-                            NSString* message = result[BPushRequestErrorMsgKey];
-                            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:message];
+        _onbindObserver = [[NSNotificationCenter defaultCenter] addObserverForName:CBType_onbind
+                    object:nil
+                    queue:[NSOperationQueue mainQueue]
+                    usingBlock:^(NSNotification *note) {
+                        NSLog(@"onbind callback block...");
+                        id obj = [note object];
+
+                        if ([obj isKindOfClass:[NSError class]]) {
+                            NSError *error = (NSError *) obj;
+                            CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:[error localizedDescription]];
+                            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+                            return;
                         }
-                        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+
+                        NSData *deviceToken = (NSData *) obj;
+                        [BPush registerDeviceToken:deviceToken];
+
+                        [BPush bindChannelWithCompleteHandler:^(id result, NSError *error) {
+                            NSLog(@"bindChannelWithCompleteHandler...");
+                            CDVPluginResult* pluginResult;
+                            if ([self checkBaiduResult:result]) {
+                                NSMutableDictionary* message = [NSMutableDictionary dictionaryWithCapacity:6];
+                                [message setObject:CBType_onbind forKey:ResultKey_type];
+                                [message setObject:[BPush getAppId] forKey:ResultKey_appId];
+                                [message setObject:[BPush getUserId] forKey:ResultKey_userId];
+                                [message setObject:[BPush getChannelId] forKey:ResultKey_channelId];
+                                [message setObject:result[BPushRequestRequestIdKey] forKey:ResultKey_requestId];
+                            
+                                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:message];
+                                [pluginResult setKeepCallbackAsBool:YES];
+                            } else {
+                                NSString* message = result[BPushRequestErrorMsgKey];
+                                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:message];
+                            }
+                            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+                        }];
+
                     }];
-                }];
-                
-    [self registerForRemoteNotifications];
+
+        [self registerForRemoteNotifications];
+    }];
 }
 
 - (void)registerForRemoteNotifications {
-    if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 8.0) {
-        if ([[UIApplication sharedApplication]respondsToSelector:@selector(registerUserNotificationSettings:)]) {
-            UIUserNotificationType UserNotificationTypes = UIUserNotificationTypeBadge | UIUserNotificationTypeSound | UIUserNotificationTypeAlert;
-            UIUserNotificationSettings *settings = [UIUserNotificationSettings settingsForTypes:UserNotificationTypes categories:nil];
-            [[UIApplication sharedApplication] registerUserNotificationSettings:settings];
-            [[UIApplication sharedApplication] registerForRemoteNotifications];
-        } else {
-            [[UIApplication sharedApplication] registerForRemoteNotificationTypes:
-            (UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound | UIRemoteNotificationTypeAlert)];
-        }
+    NSLog(@"registerForRemoteNotifications...");
+    
+    if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 10.0) {
+#ifdef NSFoundationVersionNumber_iOS_9_x_Max
+        UNUserNotificationCenter* center = [UNUserNotificationCenter currentNotificationCenter];
+        
+        [center requestAuthorizationWithOptions:(UNAuthorizationOptionAlert + UNAuthorizationOptionSound + UNAuthorizationOptionBadge)
+                              completionHandler:^(BOOL granted, NSError * _Nullable error) {
+                                  // Enable or disable features based on authorization.
+                                  if (granted) {
+                                      [[UIApplication sharedApplication] registerForRemoteNotifications];
+                                  }
+                              }];
+#endif
+    } else if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 8.0 &&
+            [[UIApplication sharedApplication]respondsToSelector:@selector(registerUserNotificationSettings:)]) {
+
+        UIUserNotificationType UserNotificationTypes = UIUserNotificationTypeBadge | UIUserNotificationTypeSound | UIUserNotificationTypeAlert;
+        UIUserNotificationSettings *settings = [UIUserNotificationSettings settingsForTypes:UserNotificationTypes categories:nil];
+        [[UIApplication sharedApplication] registerUserNotificationSettings:settings];
+        [[UIApplication sharedApplication] registerForRemoteNotifications];
+
     } else {
-        [[UIApplication sharedApplication] registerForRemoteNotificationTypes:
-        (UIRemoteNotificationTypeBadge | UIRemoteNotificationTypeSound | UIRemoteNotificationTypeAlert)];        
+        UIUserNotificationType UserNotificationTypes = UIUserNotificationTypeBadge | UIUserNotificationTypeSound | UIUserNotificationTypeAlert;
+        [[UIApplication sharedApplication] registerForRemoteNotificationTypes:UserNotificationTypes];      
     }    
 }
 
@@ -143,36 +164,42 @@ NSString* const ResultKey_payload = @"payload";
     }
 }
 
-- (void)stopWork:(CDVInvokedUrlCommand*)command{
-    NSLog(@"stopWork...");
-    
-    [[UIApplication sharedApplication] unregisterForRemoteNotifications];
-    
-    [BPush unbindChannelWithCompleteHandler:^(id result, NSError *error) {
-        CDVPluginResult* pluginResult;
-        if ([self checkBaiduResult:result]) {
-            NSMutableDictionary* message = [NSMutableDictionary dictionaryWithCapacity:3];
-            [message setObject:CBType_onunbind forKey:ResultKey_type];
-            [message setObject:result[BPushRequestRequestIdKey] forKey:ResultKey_requestId];
+- (void)stopWork:(CDVInvokedUrlCommand*)command
+{
+    [self.commandDelegate runInBackground:^ {
+        NSLog(@"stopWork...");
         
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:message];
-            [pluginResult setKeepCallbackAsBool:YES];
-        } else {
-            NSString* message = result[BPushRequestErrorMsgKey];
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:message];
-        }
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-    }];
+        [[UIApplication sharedApplication] unregisterForRemoteNotifications];
+        
+        [BPush unbindChannelWithCompleteHandler:^(id result, NSError *error) {
+            CDVPluginResult* pluginResult;
+            if ([self checkBaiduResult:result]) {
+                NSMutableDictionary* message = [NSMutableDictionary dictionaryWithCapacity:3];
+                [message setObject:CBType_onunbind forKey:ResultKey_type];
+                [message setObject:result[BPushRequestRequestIdKey] forKey:ResultKey_requestId];
+            
+                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:message];
+                [pluginResult setKeepCallbackAsBool:YES];
+            } else {
+                NSString* message = result[BPushRequestErrorMsgKey];
+                pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:message];
+            }
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        }];
+    }];        
 }
 
-- (void)resumeWork:(CDVInvokedUrlCommand*)command{
-    NSLog(@"resumeWork...");
-    
-    [self registerForRemoteNotifications];
-    
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_NO_RESULT];
-    [pluginResult setKeepCallbackAsBool:YES];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+- (void)resumeWork:(CDVInvokedUrlCommand*)command
+{
+    [self.commandDelegate runInBackground:^ {
+        NSLog(@"resumeWork...");
+        
+        [self registerForRemoteNotifications];
+        
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_NO_RESULT];
+        [pluginResult setKeepCallbackAsBool:YES];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    }];
 }
 
 - (void)setTags:(CDVInvokedUrlCommand*)command{
@@ -277,6 +304,12 @@ NSString* const ResultKey_payload = @"payload";
         return YES;
     }
     return NO;
+}
+
+- (void)disableLbs {
+    NSLog(@"disableLbs...");
+    // 禁用地理位置推送 需要再绑定接口前调用。
+    [BPush disableLbs];
 }
 
 @end
