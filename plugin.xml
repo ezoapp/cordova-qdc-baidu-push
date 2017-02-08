@@ -77,17 +77,17 @@
       
       <!-- 5.1.0版本新增了PushInfoProvider ContentProvider的声明,并增加了ContentProvider的写权限声明，示例如下： -->
       <!-- 适配Android N系统必需的ContentProvider写权限声明，写权限包含应用包名 -->
-	    <uses-permission android:name="baidu.push.permission.WRITE_PUSHINFOPROVIDER.YourPackageName" />
+	    <uses-permission android:name="baidu.push.permission.WRITE_PUSHINFOPROVIDER.${applicationId}" />
       <permission
-          android:name="baidu.push.permission.WRITE_PUSHINFOPROVIDER.YourPackageName"
+          android:name="baidu.push.permission.WRITE_PUSHINFOPROVIDER.${applicationId}"
           android:protectionLevel="normal" />
       
       <!-- 适配Android N系统必需的ContentProvider声明，写权限包含应用包名-->
       <!-- 5.2.0版本的AndroidManifest.xml中PushInfoProvider新增权限级别，如下所示：-->
 	    <provider
 	        android:name="com.baidu.android.pushservice.PushInfoProvider"
-	        android:authorities="YourPackageName.bdpush"
-	        android:writePermission="baidu.push.permission.WRITE_PUSHINFOPROVIDER.YourPackageName"
+	        android:authorities="${applicationId}.bdpush"
+	        android:writePermission="baidu.push.permission.WRITE_PUSHINFOPROVIDER.${applicationId}"
 	        android:protectionLevel="signature"
 	        android:exported="true" />
 
