@@ -24,9 +24,13 @@ NSString* const ResultKey_failTags = @"failTags";
 NSString* const ResultKey_tags = @"tags";
 NSString* const ResultKey_payload = @"payload";
 
-@implementation BaiduPushPlugin{
+@implementation BaiduPushPlugin {
     NSNotificationCenter *_onbindObserver;    
 }
+
+@synthesize startWorkCallbackId;
+@synthesize notificationMessage;
+@synthesize handlerObj;
 
 - (void)startWork:(CDVInvokedUrlCommand*)command
 {
@@ -84,6 +88,15 @@ NSString* const ResultKey_payload = @"payload";
                     }];
 
         [self registerForRemoteNotifications];
+
+        // if there is a pending startup notification
+        if (self.notificationMessage) {			
+            dispatch_async(dispatch_get_main_queue(), ^{
+                // delay to allow JS event handlers to be setup
+                [self performSelector:@selector(receiveNotification) withObject:nil afterDelay: 0.5];
+            });
+        }
+
     }];
 }
 
@@ -116,17 +129,22 @@ NSString* const ResultKey_payload = @"payload";
     }    
 }
 
-- (void)receiveNotificationWithType:(NSString *)type  {
+- (void)receiveNotification {
     if (self.startWorkCallbackId && self.notificationMessage) {
-        NSLog(@"receive Notification: %@, withType: %@", self.notificationMessage, type);
+        NSLog(@"receive Notification: %@", self.notificationMessage);
         // handle notification with baidu push
         [BPush handleNotification:self.notificationMessage];
         
-        NSMutableDictionary* message = [NSMutableDictionary dictionaryWithCapacity:3];
+        NSMutableDictionary* message = [NSMutableDictionary dictionaryWithCapacity:4];
         NSMutableDictionary* payload = [NSMutableDictionary dictionaryWithCapacity:4];
 
         for (id key in self.notificationMessage) {
-            if ([key isEqualToString:@"aps"]) {
+
+            if ([key isEqualToString:ResultKey_type]) {
+                id type = [self.notificationMessage objectForKey:ResultKey_type];
+                [message setObject:type forKey:ResultKey_type];
+
+            } else if ([key isEqualToString:@"aps"]) {
                 id aps = [self.notificationMessage objectForKey:@"aps"];
 
                 for(id apsKey in aps) {
@@ -152,7 +170,6 @@ NSString* const ResultKey_payload = @"payload";
             }
         }
         
-        [message setObject:type forKey:ResultKey_type];
         [message setObject:payload forKey:ResultKey_payload];
 
         // send notification message
@@ -310,6 +327,43 @@ NSString* const ResultKey_payload = @"payload";
     NSLog(@"disableLbs...");
     // 禁用地理位置推送 需要再绑定接口前调用。
     [BPush disableLbs];
+}
+
+-(void) finish:(CDVInvokedUrlCommand*)command
+{
+    NSLog(@"Push Plugin finish called");
+
+    [self.commandDelegate runInBackground:^ {
+        NSString* notId = [command.arguments objectAtIndex:0];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [NSTimer scheduledTimerWithTimeInterval:0.1
+                                             target:self
+                                           selector:@selector(stopBackgroundTask:)
+                                           userInfo:notId
+                                            repeats:NO];
+        });
+
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    }];
+}
+
+-(void)stopBackgroundTask:(NSTimer*)timer
+{
+    UIApplication *app = [UIApplication sharedApplication];
+
+    NSLog(@"Push Plugin stopBackgroundTask called");
+
+    if (handlerObj) {
+        NSLog(@"Push Plugin handlerObj");
+        completionHandler = [handlerObj[[timer userInfo]] copy];
+        if (completionHandler) {
+            NSLog(@"Push Plugin: stopBackgroundTask (remaining t: %f)", app.backgroundTimeRemaining);
+            completionHandler(UIBackgroundFetchResultNewData);
+            completionHandler = nil;
+        }
+    }
 }
 
 @end

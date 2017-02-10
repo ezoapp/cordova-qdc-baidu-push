@@ -91,8 +91,9 @@ static char launchNotificationKey;
 {
     NSLog(@"didReceiveRemoteNotification...");
     BaiduPushPlugin *pushHandler = [self getCommandInstance:@"BaiduPush"];
-    pushHandler.notificationMessage = userInfo;
-    [pushHandler receiveNotificationWithType:CBType_onnotificationarrived];    
+    pushHandler.notificationMessage = [userInfo mutableCopy];
+    [pushHandler.notificationMessage setObject:CBType_onnotificationarrived forKey:ResultKey_type];
+    [pushHandler receiveNotification];    
 }
 
 - (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler
@@ -103,8 +104,9 @@ static char launchNotificationKey;
     if (application.applicationState == UIApplicationStateActive) {
         NSLog(@"app active");
         BaiduPushPlugin *pushHandler = [self getCommandInstance:@"BaiduPush"];
-        pushHandler.notificationMessage = userInfo;
-        [pushHandler receiveNotificationWithType:CBType_onnotificationarrived];
+        pushHandler.notificationMessage = [userInfo mutableCopy];
+        [pushHandler.notificationMessage setObject:CBType_onnotificationarrived forKey:ResultKey_type];
+        [pushHandler receiveNotification];
 
         completionHandler(UIBackgroundFetchResultNewData);
     }
@@ -145,8 +147,9 @@ static char launchNotificationKey;
                 [pushHandler.handlerObj setObject:safeHandler forKey:@"handler"];
             }
 
-            pushHandler.notificationMessage = userInfo;
-            [pushHandler receiveNotificationWithType:CBType_onmessage];
+            pushHandler.notificationMessage = [userInfo mutableCopy];
+            [pushHandler.notificationMessage setObject:CBType_onmessage forKey:ResultKey_type];
+            [pushHandler receiveNotification];
         } else {
             NSLog(@"just put it in the shade");
             //save it for later
@@ -182,9 +185,10 @@ static char launchNotificationKey;
     BaiduPushPlugin *pushHandler = [self getCommandInstance:@"BaiduPush"];    
 
     if (self.launchNotification) {
-        pushHandler.notificationMessage = self.launchNotification;
+        pushHandler.notificationMessage = [self.launchNotification mutableCopy];
         self.launchNotification = nil;
-        [pushHandler performSelectorOnMainThread:@selector(receiveNotificationWithType:) withObject:CBType_onnotificationclicked waitUntilDone:NO];
+        [pushHandler.notificationMessage setObject:CBType_onnotificationclicked forKey:ResultKey_type];
+        [pushHandler performSelectorOnMainThread:@selector(receiveNotification) withObject:pushHandler waitUntilDone:NO];
     }
 }
 
@@ -193,13 +197,41 @@ static char launchNotificationKey;
 {
     NSLog(@"Push Plugin handleActionWithIdentifier %@", identifier);
     NSMutableDictionary *userInfo = [notification mutableCopy];
-    [userInfo setObject:identifier forKey:@"callback"];
-    BaiduPushPlugin *pushHandler = [self getCommandInstance:@"BaiduPush"];
-    pushHandler.notificationMessage = userInfo;
-    [pushHandler receiveNotificationWithType:CBType_onnotificationclicked];
+    [userInfo setObject:identifier forKey:@"actionCallback"];
+    NSLog(@"Push Plugin userInfo %@", userInfo);
 
-    // Must be called when finished
-    completionHandler();
+    if (application.applicationState == UIApplicationStateActive) {
+        BaiduPushPlugin *pushHandler = [self getCommandInstance:@"BaiduPush"];
+        pushHandler.notificationMessage = [userInfo mutableCopy];
+        [pushHandler.notificationMessage setObject:CBType_onnotificationclicked forKey:ResultKey_type];
+        [pushHandler receiveNotification];
+
+    } else {
+        void (^safeHandler)() = ^(void){
+            dispatch_async(dispatch_get_main_queue(), ^{
+                completionHandler();
+            });
+        };
+
+        BaiduPushPlugin *pushHandler = [self getCommandInstance:@"BaiduPush"];
+
+        if (pushHandler.handlerObj == nil) {
+            pushHandler.handlerObj = [NSMutableDictionary dictionaryWithCapacity:2];
+        }
+
+        id notId = [userInfo objectForKey:@"notId"];
+        if (notId != nil) {
+            NSLog(@"Push Plugin notId %@", notId);
+            [pushHandler.handlerObj setObject:safeHandler forKey:notId];
+        } else {
+            NSLog(@"Push Plugin notId handler");
+            [pushHandler.handlerObj setObject:safeHandler forKey:@"handler"];
+        }
+
+        pushHandler.notificationMessage = [userInfo mutableCopy];
+        [pushHandler.notificationMessage setObject:CBType_onnotificationclicked forKey:ResultKey_type];
+        [pushHandler performSelectorOnMainThread:@selector(receiveNotification) withObject:pushHandler waitUntilDone:NO];
+    }
 }
 
 - (NSMutableArray *)launchNotification

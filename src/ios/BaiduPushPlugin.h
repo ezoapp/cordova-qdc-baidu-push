@@ -12,10 +12,26 @@ extern NSString* const CBType_onsettags;
 extern NSString* const CBType_ondeltags;
 extern NSString* const CBType_onlisttags;
 
+extern NSString* const ResultKey_type;
+extern NSString* const ResultKey_appId;
+extern NSString* const ResultKey_userId;
+extern NSString* const ResultKey_channelId;
+extern NSString* const ResultKey_requestId;
+extern NSString* const ResultKey_successTags;
+extern NSString* const ResultKey_failTags;
+extern NSString* const ResultKey_tags;
+extern NSString* const ResultKey_payload;
+
 @interface BaiduPushPlugin : CDVPlugin
+{
+    NSString *startWorkCallbackId;
+    NSMutableDictionary *notificationMessage;
+    NSMutableDictionary *handlerObj;    
+    void (^completionHandler)(UIBackgroundFetchResult);
+}
 
 @property (nonatomic, copy) NSString *startWorkCallbackId;
-@property (nonatomic, strong) NSDictionary *notificationMessage;
+@property (nonatomic, strong) NSMutableDictionary *notificationMessage;
 @property (nonatomic, strong) NSMutableDictionary *handlerObj;
  
 /*!
@@ -50,7 +66,7 @@ extern NSString* const CBType_onlisttags;
 
 - (void)listTags:(CDVInvokedUrlCommand*)command;
 
-- (void)receiveNotificationWithType:(NSString *)type;
+- (void)receiveNotification;
 
 - (void)disableLbs;
 
