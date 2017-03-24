@@ -1,6 +1,6 @@
 //
 //  BPush.h
-//  Version: 1.4.8
+//  Version: 1.4.9
 //  百度云推送iOS版本头文件 //
 //
 
@@ -73,15 +73,6 @@ typedef void (^BPushCallBack)(id result, NSError *error);
  *     none
  */
 + (void)setAccessToken:(NSString *)token;
-
-/**
- * 设置 Bduss
- * @param
- *     bduss - 百度账号体系相关 Bduss
- * @return
- *     none
- */
-+ (void)setBduss:(NSString *)bduss forApp:(NSString *)appid;
 
 /**
  * 关闭 lbs
